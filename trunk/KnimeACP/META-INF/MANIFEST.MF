@@ -1,0 +1,17 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: ACPNode-Node extension for KNIME Workbench
+Bundle-SymbolicName: org.unicen.knime.acp; singleton:=true
+Bundle-Version: 1.0.0
+Bundle-ClassPath: acpnode.jar,
+ lib/flanagan.jar
+Bundle-Activator: org.unicen.edu.ar.knime.acp.node.ACPNodeNodePlugin
+Bundle-Vendor: Rodrigo
+Bundle-Localization: plugin
+Require-Bundle: org.eclipse.core.runtime,
+ org.knime.workbench.core,
+ org.knime.workbench.repository,
+ org.knime.base
+Eclipse-LazyStart: true
+Export-Package: org.unicen.edu.ar.knime.acp.node
+
