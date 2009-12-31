@@ -60,6 +60,8 @@ public class ACPNodeNodeModel extends NodeModel {
                     ACPNodeNodeModel.DEFAULT_COUNT,
                     Integer.MIN_VALUE, Integer.MAX_VALUE);
     
+    
+    HashMap<Integer, Vector<ComponentePrincipalComponent>> componentes;
 
     /**
      * Constructor for the node model.
@@ -143,13 +145,19 @@ public class ACPNodeNodeModel extends NodeModel {
         }
       
 
-        HashMap<Integer, Vector<ComponentePrincipalComponent>> componentes=DataManager.getComponentes(dataSet, nombresVariables);
+        componentes=DataManager.getComponentes(dataSet, nombresVariables);
         
         // once we are done, we close the container and return its table
         container.close();
         BufferedDataTable out = container.getTable();
         return new BufferedDataTable[]{out};
     }
+    
+    public HashMap<Integer, Vector<ComponentePrincipalComponent>> getComponentes(){
+    	return componentes;
+    }
+    
+    
 
     /**
      * {@inheritDoc}
