@@ -134,8 +134,7 @@ public class ACPNodeNodeView extends NodeView<ACPNodeNodeModel> {
 		// Show in Frame
 		
 		JFrame frame=this.createFrame("sumburule");
-		frame.getContentPane().add(new JScrollPane(graph));
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frame.getContentPane().add(new JScrollPane(graph));		
 		frame.pack();
 		frame.setVisible(true);
 		}

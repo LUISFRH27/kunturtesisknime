@@ -14,9 +14,15 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JTextField;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
+import org.knime.core.node.defaultnodesettings.DialogComponent;
+import org.knime.core.node.defaultnodesettings.DialogComponentBoolean;
 import org.knime.core.node.defaultnodesettings.DialogComponentNumber;
+import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
+import org.knime.core.node.defaultnodesettings.SettingsModelDouble;
 import org.knime.core.node.defaultnodesettings.SettingsModelIntegerBounded;
 
 /**
@@ -51,7 +57,13 @@ public class ACPNodeNodeDialog extends DefaultNodeSettingsPane {
 	private JLabel jLblVisualizaon;
 	private JLabel jLblVAbsMenores;
 	private JTextField jTxtMinLoadingFactors;
-	
+	private final SettingsModelBoolean isAutoval=new SettingsModelBoolean(ACPNodeNodeModel.CFGKEY_IS_AUTOVAL,ACPNodeNodeModel.DEFAULT_IS_AUTOVAL);
+	private final SettingsModelDouble minAutoval=new SettingsModelDouble(ACPNodeNodeModel.CFGKEY_MIN_AUTOVAL,ACPNodeNodeModel.DEFAULT_MIN_AUTOVAL);
+	private final SettingsModelBoolean isCantComp=new SettingsModelBoolean(ACPNodeNodeModel.CFGKEY_Is_CantComp,ACPNodeNodeModel.DEFAULT_IS_CANT_COMP); 
+	private final SettingsModelIntegerBounded cantComp=new SettingsModelIntegerBounded(ACPNodeNodeModel.CFGKEY_CANT_COMP,ACPNodeNodeModel.DEFAULT_CANT_COMP,0,Integer.MAX_VALUE); 
+	private final SettingsModelBoolean isVarimax=new SettingsModelBoolean(ACPNodeNodeModel.CFGKEY_IS_VARIMAX,ACPNodeNodeModel.DEFAULT_IS_VARIMAX);
+	private final SettingsModelIntegerBounded cantIteraciones=new SettingsModelIntegerBounded(ACPNodeNodeModel.CFGKEY_CANT_ITERACIONES,ACPNodeNodeModel.DEFAULT_CAN_ITERACIONES,0,Integer.MAX_VALUE);
+	private final SettingsModelDouble minLoadingFactor=new SettingsModelDouble(ACPNodeNodeModel.CFGKEY_MIN_LOADING_FACTOR,ACPNodeNodeModel.DEFAULT_MIN_LOADING_FACTOR);
     /**
      * New pane for configuring ACPNode node dialog.
      * This is just a suggestion to demonstrate possible default dialog
@@ -69,14 +81,21 @@ public class ACPNodeNodeDialog extends DefaultNodeSettingsPane {
         panel.add(label);
         panel.add(texto);
      //   addDialogComponent(panel);
-        addDialogComponent(new DialogComponentNumber(
-                new SettingsModelIntegerBounded(
-                    ACPNodeNodeModel.CFGKEY_COUNT,
-                    ACPNodeNodeModel.DEFAULT_COUNT,
-                    Integer.MIN_VALUE, Integer.MAX_VALUE),
-                    "Counter:", /*step*/ 1, /*componentwidth*/ 5));
-        addTab("ACP", getJPanel());
-        crearListener();            
+        createNewGroup("Extracción");
+        addDialogComponent(new DialogComponentBoolean(isAutoval,"Autovalores mayores a:"));
+        addDialogComponent(new DialogComponentNumber(minAutoval,
+                "Ingrese el minimo valor de autovalor:", 0.1D));
+        addDialogComponent(new DialogComponentBoolean(isCantComp,"Cantidad de Componentes"));
+        addDialogComponent(new DialogComponentNumber(cantComp,"Numero de componentes:",1));
+        createNewGroup("Rotación");
+        addDialogComponent(new DialogComponentBoolean(isVarimax,"Rotación varimax"));
+        addDialogComponent(new DialogComponentNumber(cantIteraciones,"Numero de iteraciones: ",1));
+        createNewGroup("Opciones visuales");
+        addDialogComponent(new DialogComponentNumber(minLoadingFactor,"Eliminar valores absolutos menores a:",0.1D));
+        //addTab("ACP", getJPanel());
+        crearListeners(); 
+        cantComp.setEnabled(false);
+        cantIteraciones.setEnabled(false);
     }
     
     private JPanel getJPanelRotacion() {
@@ -115,84 +134,128 @@ public class ACPNodeNodeDialog extends DefaultNodeSettingsPane {
 	}
     
     
-	private void crearListener() {
-		// TODO Auto-generated method stub
-		jRButtonVarimax.addActionListener(new ActionListener(){			
-
-			@Override
-			public void actionPerformed(ActionEvent arg0) {
-				// TODO Auto-generated method stub
-				jLblNroIteraciones.setEnabled(!jLblNroIteraciones.isEnabled());
-				jTxtNroIteraciones.setEnabled(!jTxtNroIteraciones.isEnabled());
-			}
-			
-		});
-		
-		jTxtNroIteraciones.addKeyListener(new KeyListener(){
-
-			@Override
-			public void keyPressed(KeyEvent arg0) {
-				// TODO Auto-generated method stub
-
-		     
-				
-			}
-            @Override
-			public void keyReleased(KeyEvent arg0) {
-				// TODO Auto-generated method stub
-				 String s=String.valueOf(arg0.getKeyChar());
-				try {
-					Integer i=Integer.parseInt(s);
-				} catch (NumberFormatException e) {
-					jTxtNroIteraciones.setText(jTxtNroIteraciones.getText().replaceAll(String.valueOf(arg0.getKeyChar()), ""));
-					
-				  
-				} 
-					
-			}
-
-			@Override
-			public void keyTyped(KeyEvent arg0) {
-				// TODO Auto-generated method stub
-				
-			}
-			
-		});
-		
+//	private void crearListener() {
+//		// TODO Auto-generated method stub
+//		jRButtonVarimax.addActionListener(new ActionListener(){			
+//
+//			@Override
+//			public void actionPerformed(ActionEvent arg0) {
+//				// TODO Auto-generated method stub
+//				jLblNroIteraciones.setEnabled(!jLblNroIteraciones.isEnabled());
+//				jTxtNroIteraciones.setEnabled(!jTxtNroIteraciones.isEnabled());
+//			}
+//			
+//		});
+//		
+//		jTxtNroIteraciones.addKeyListener(new KeyListener(){
+//
+//			@Override
+//			public void keyPressed(KeyEvent arg0) {
+//				// TODO Auto-generated method stub
+//
+//		     
+//				
+//			}
+//            @Override
+//			public void keyReleased(KeyEvent arg0) {
+//				// TODO Auto-generated method stub
+//				 String s=String.valueOf(arg0.getKeyChar());
+//				try {
+//					Integer i=Integer.parseInt(s);
+//				} catch (NumberFormatException e) {
+//					jTxtNroIteraciones.setText(jTxtNroIteraciones.getText().replaceAll(String.valueOf(arg0.getKeyChar()), ""));
+//					
+//				  
+//				} 
+//					
+//			}
+//
+//			@Override
+//			public void keyTyped(KeyEvent arg0) {
+//				// TODO Auto-generated method stub
+//				
+//			}
+//			
+//		});
+//		
+//	
+//		
+//		jRButtonAutovalor.addActionListener(new ActionListener(){
+//
+//			@Override
+//			public void actionPerformed(ActionEvent e) {
+//				if(jRButtonAutovalor.isSelected())
+//				{
+//					jTxtMinAutoval.setEnabled(true);
+//					jTxtCantidadComponentes.setEnabled(false);
+//					jRButtonCantComp.setSelected(false);
+//				}
+//				
+//				
+//			}
+//			
+//		});
+//		
+//		jRButtonCantComp.addActionListener(new ActionListener(){
+//
+//			@Override
+//			public void actionPerformed(ActionEvent e) {
+//				if(jRButtonCantComp.isSelected())
+//				{
+//					jTxtCantidadComponentes.setEnabled(true);
+//					jTxtMinAutoval.setEnabled(false);
+//					jRButtonAutovalor.setSelected(false);
+//				}
+//				
+//			}
+//			
+//		});
+//	}
 	
-		
-		jRButtonAutovalor.addActionListener(new ActionListener(){
+    private void crearListeners(){
+    	isAutoval.addChangeListener(new ChangeListener(){
 
 			@Override
-			public void actionPerformed(ActionEvent e) {
-				if(jRButtonAutovalor.isSelected())
-				{
-					jTxtMinAutoval.setEnabled(true);
-					jTxtCantidadComponentes.setEnabled(false);
-					jRButtonCantComp.setSelected(false);
+			public void stateChanged(ChangeEvent e) {
+				if(isAutoval.getBooleanValue()){
+					isCantComp.setBooleanValue(false);
+					cantComp.setEnabled(false);
+					minAutoval.setEnabled(true);	
 				}
 				
 				
 			}
-			
-		});
-		
-		jRButtonCantComp.addActionListener(new ActionListener(){
+    		
+    	});
+    	
+    	isCantComp.addChangeListener(new ChangeListener(){
 
 			@Override
-			public void actionPerformed(ActionEvent e) {
-				if(jRButtonCantComp.isSelected())
+			public void stateChanged(ChangeEvent e) {
+				// TODO Auto-generated method stub
+				if(isCantComp.getBooleanValue())
 				{
-					jTxtCantidadComponentes.setEnabled(true);
-					jTxtMinAutoval.setEnabled(false);
-					jRButtonAutovalor.setSelected(false);
+				    isAutoval.setBooleanValue(false);
+				    cantComp.setEnabled(true);
+				    minAutoval.setEnabled(false);
 				}
+			}
+    		
+    	});
+    	
+    	isVarimax.addChangeListener(new ChangeListener(){
+
+			@Override
+			public void stateChanged(ChangeEvent e) {
+				// TODO Auto-generated method stub
+				
+					cantIteraciones.setEnabled(!cantIteraciones.isEnabled());
 				
 			}
-			
-		});
-	}
-	
+    		
+    	});
+    }
+    
 	private JPanel getJPanel() {
 		if (jPanel == null) {
 			jLblError = new JLabel();

@@ -3,7 +3,11 @@ package org.unicen.edu.ar.knime.acp.node;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Vector;
+
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 import org.knime.core.data.DataCell;
 import org.knime.core.data.DataColumnSpec;
@@ -18,6 +22,8 @@ import org.knime.core.data.def.StringCell;
 import org.knime.core.node.BufferedDataContainer;
 import org.knime.core.node.BufferedDataTable;
 import org.knime.core.node.CanceledExecutionException;
+import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
+import org.knime.core.node.defaultnodesettings.SettingsModelDouble;
 import org.knime.core.node.defaultnodesettings.SettingsModelIntegerBounded;
 import org.knime.core.node.ExecutionContext;
 import org.knime.core.node.ExecutionMonitor;
@@ -55,12 +61,45 @@ public class ACPNodeNodeModel extends NodeModel {
     // example value: the models count variable filled from the dialog 
     // and used in the models execution method. The default components of the
     // dialog work with "SettingsModels".
-    private final SettingsModelIntegerBounded m_count =
-        new SettingsModelIntegerBounded(ACPNodeNodeModel.CFGKEY_COUNT,
-                    ACPNodeNodeModel.DEFAULT_COUNT,
-                    Integer.MIN_VALUE, Integer.MAX_VALUE);
+//    private final SettingsModelIntegerBounded m_count =
+//        new SettingsModelIntegerBounded(ACPNodeNodeModel.CFGKEY_COUNT,
+//                    ACPNodeNodeModel.DEFAULT_COUNT,
+//                    Integer.MIN_VALUE, Integer.MAX_VALUE);
+    static final String CFGKEY_IS_AUTOVAL="Is_autoval";
     
+    static final boolean DEFAULT_IS_AUTOVAL=true;
     
+    private final SettingsModelBoolean isAutoval=new SettingsModelBoolean(ACPNodeNodeModel.CFGKEY_IS_AUTOVAL,ACPNodeNodeModel.DEFAULT_IS_AUTOVAL);
+   
+    static final String CFGKEY_MIN_AUTOVAL="Min_Autoval";
+    static final double DEFAULT_MIN_AUTOVAL=1D;
+    
+    private final SettingsModelDouble minAutoval=new SettingsModelDouble(ACPNodeNodeModel.CFGKEY_MIN_AUTOVAL,ACPNodeNodeModel.DEFAULT_MIN_AUTOVAL);
+    static final String CFGKEY_Is_CantComp="Is_CantComp";
+    static final boolean DEFAULT_IS_CANT_COMP=false;
+    
+    private final SettingsModelBoolean isCantComp=new SettingsModelBoolean(ACPNodeNodeModel.CFGKEY_Is_CantComp,ACPNodeNodeModel.DEFAULT_IS_CANT_COMP);
+    
+    static final String CFGKEY_CANT_COMP="CantComp";
+    static final int DEFAULT_CANT_COMP=0;
+    
+    private final SettingsModelIntegerBounded cantComp=new SettingsModelIntegerBounded(ACPNodeNodeModel.CFGKEY_CANT_COMP,ACPNodeNodeModel.DEFAULT_CANT_COMP,0,Integer.MAX_VALUE);
+    
+    static final String CFGKEY_IS_VARIMAX="IsVarimax";
+    static final boolean DEFAULT_IS_VARIMAX=false;
+    
+    private final SettingsModelBoolean isVarimax=new SettingsModelBoolean(ACPNodeNodeModel.CFGKEY_IS_VARIMAX,ACPNodeNodeModel.DEFAULT_IS_VARIMAX);
+    
+    static final String CFGKEY_CANT_ITERACIONES="CantIteraciones";
+    static final int DEFAULT_CAN_ITERACIONES=0;
+    
+	private final SettingsModelIntegerBounded cantIteraciones=new SettingsModelIntegerBounded(ACPNodeNodeModel.CFGKEY_CANT_ITERACIONES,ACPNodeNodeModel.DEFAULT_CAN_ITERACIONES,0,Integer.MAX_VALUE);
+    
+	static final String CFGKEY_MIN_LOADING_FACTOR="MinLoadingFactor";
+	static final double DEFAULT_MIN_LOADING_FACTOR=0D;
+	
+	private final SettingsModelDouble minLoadingFactor=new SettingsModelDouble(ACPNodeNodeModel.CFGKEY_MIN_AUTOVAL,ACPNodeNodeModel.DEFAULT_MIN_LOADING_FACTOR);
+	
     HashMap<Integer, Vector<ComponentePrincipalComponent>> componentes;
 
     /**
@@ -70,6 +109,7 @@ public class ACPNodeNodeModel extends NodeModel {
     
         // TODO one incoming port and one outgoing port is assumed
         super(1, 1);
+        cantComp.setEnabled(false);
     }
 
     /**
@@ -85,36 +125,9 @@ public class ACPNodeNodeModel extends NodeModel {
         
         // the data table spec of the single output table, 
         // the table will have three columns:
-        DataColumnSpec[] allColSpecs = new DataColumnSpec[3];
-        allColSpecs[0] = 
-            new DataColumnSpecCreator("Column 0", StringCell.TYPE).createSpec();
-        allColSpecs[1] = 
-            new DataColumnSpecCreator("Column 1", DoubleCell.TYPE).createSpec();
-        allColSpecs[2] = 
-            new DataColumnSpecCreator("Column 2", IntCell.TYPE).createSpec();
-        DataTableSpec outputSpec = new DataTableSpec(allColSpecs);
-        // the execution context will provide us with storage capacity, in this
-        // case a data container to which we will add rows sequentially
-        // Note, this container can also handle arbitrary big data tables, it
-        // will buffer to disc if necessary.
-        BufferedDataContainer container = exec.createDataContainer(outputSpec);
+        
         // let's add m_count rows to it
-        for (int i = 0; i < m_count.getIntValue(); i++) {
-            RowKey key = new RowKey("Row " + i);
-            // the cells of the current row, the types of the cells must match
-            // the column spec (see above)
-            DataCell[] cells = new DataCell[3];
-            cells[0] = new StringCell("String_" + i); 
-            cells[1] = new DoubleCell(0.5 * i); 
-            cells[2] = new IntCell(i);
-            DataRow row = new DefaultRow(key, cells);
-            container.addRowToTable(row);
-            
-            // check if the execution monitor was canceled
-            exec.checkCanceled();
-            exec.setProgress(i / (double)m_count.getIntValue(), 
-                "Adding row " + i);
-        }
+      
         
         BufferedDataTable table = inData[0];
         int rowCount = table.getRowCount();
@@ -146,6 +159,55 @@ public class ACPNodeNodeModel extends NodeModel {
       
 
         componentes=DataManager.getComponentes(dataSet, nombresVariables);
+        //tengo 292 filas y 13 columnas ahora
+        DataColumnSpec[] allColSpecs = new DataColumnSpec[componentes.keySet().size()];
+        for(int i=0;i<componentes.keySet().size();i++)
+        {
+        	allColSpecs[i]=new DataColumnSpecCreator("Column "+i,DoubleCell.TYPE).createSpec();
+        }
+//        allColSpecs[0] = 
+//            new DataColumnSpecCreator("Column 0", StringCell.TYPE).createSpec();
+//        allColSpecs[1] = 
+//            new DataColumnSpecCreator("Column 1", DoubleCell.TYPE).createSpec();
+//        allColSpecs[2] = 
+//            new DataColumnSpecCreator("Column 2", IntCell.TYPE).createSpec();
+        DataTableSpec outputSpec = new DataTableSpec(allColSpecs);
+        // the execution context will provide us with storage capacity, in this
+        // case a data container to which we will add rows sequentially
+        // Note, this container can also handle arbitrary big data tables, it
+        // will buffer to disc if necessary.
+        BufferedDataContainer container = exec.createDataContainer(outputSpec);
+        
+        
+        
+        int[] numerosColumnas=new int[componentes.keySet().size()];
+        int pos=0;
+        for (Iterator iterator = componentes.keySet().iterator(); iterator.hasNext();) {
+			Integer type = (Integer) iterator.next();
+			Vector<ComponentePrincipalComponent> factores=componentes.get(type);
+			numerosColumnas[pos++]=getMayor(factores);			
+		}
+        
+        for (int i = 0; i < rowCount; i++) {
+            RowKey key = new RowKey("Row" + i);
+            // the cells of the current row, the types of the cells must match
+            // the column spec (see above)
+            DataCell[] cells = new DataCell[componentes.keySet().size()];
+            for(int j=0;j<componentes.keySet().size();j++)
+            {
+            	cells[j]=new DoubleCell(dataSet[numerosColumnas[j]][i]);
+            }
+//            cells[0] = new StringCell("String_" + i); 
+//            cells[1] = new DoubleCell(0.5 * i); 
+//            cells[2] = new IntCell(i);
+            DataRow row = new DefaultRow(key, cells);
+            container.addRowToTable(row);
+            
+            // check if the execution monitor was canceled
+            exec.checkCanceled();
+            exec.setProgress(i / (double)componentes.keySet().size(), 
+                "Adding row " + i);
+        }
         
         // once we are done, we close the container and return its table
         container.close();
@@ -153,7 +215,21 @@ public class ACPNodeNodeModel extends NodeModel {
         return new BufferedDataTable[]{out};
     }
     
-    public HashMap<Integer, Vector<ComponentePrincipalComponent>> getComponentes(){
+    private int getMayor(Vector<ComponentePrincipalComponent> factores) {
+		double peso=0;
+		int fila=-1;
+		for(int i=0;i<factores.size();i++)
+			if(factores.get(i).getPeso()>peso)
+			{
+				fila=i;
+				peso=factores.get(i).getPeso();
+			}
+			
+		
+		return fila;
+	}
+
+	public HashMap<Integer, Vector<ComponentePrincipalComponent>> getComponentes(){
     	return componentes;
     }
     
@@ -193,8 +269,8 @@ public class ACPNodeNodeModel extends NodeModel {
 
         // TODO save user settings to the config object.
         
-        m_count.saveSettingsTo(settings);
-
+        isAutoval.saveSettingsTo(settings);
+        minAutoval.saveSettingsTo(settings);
     }
 
     /**
@@ -208,8 +284,8 @@ public class ACPNodeNodeModel extends NodeModel {
         // It can be safely assumed that the settings are valided by the 
         // method below.
         
-        m_count.loadSettingsFrom(settings);
-
+        isAutoval.loadSettingsFrom(settings);
+        minAutoval.loadSettingsFrom(settings);
     }
 
     /**
@@ -224,8 +300,8 @@ public class ACPNodeNodeModel extends NodeModel {
         // SettingsModel).
         // Do not actually set any values of any member variables.
 
-        m_count.validateSettings(settings);
-
+        isAutoval.validateSettings(settings);
+        minAutoval.validateSettings(settings);
     }
     
     /**
@@ -261,6 +337,8 @@ public class ACPNodeNodeModel extends NodeModel {
         // (e.g. data used by the views).
 
     }
+    
+    
 
 }
 
