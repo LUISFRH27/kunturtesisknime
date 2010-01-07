@@ -62,6 +62,7 @@ public class ACPNodeNodeView extends NodeView<ACPNodeNodeModel> {
      
      this.setViewTitleSuffix("vista ACP");
       setComponent(m_panel);
+     
     }
 
     private void getPanel(

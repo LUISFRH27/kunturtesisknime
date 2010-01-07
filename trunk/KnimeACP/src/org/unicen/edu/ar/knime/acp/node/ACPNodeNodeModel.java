@@ -33,7 +33,7 @@ import org.knime.core.node.NodeModel;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
 import org.unicen.edu.ar.knime.acp.kernel.ComponentePrincipalComponent;
-import org.unicen.edu.ar.knime.acp.kernel.DataManager;
+import org.unicen.edu.ar.knime.acp.kernel.PCA;
 
 import flanagan.math.Matrix;
 
@@ -81,7 +81,7 @@ public class ACPNodeNodeModel extends NodeModel {
     private final SettingsModelBoolean isCantComp=new SettingsModelBoolean(ACPNodeNodeModel.CFGKEY_Is_CantComp,ACPNodeNodeModel.DEFAULT_IS_CANT_COMP);
     
     static final String CFGKEY_CANT_COMP="CantComp";
-    static final int DEFAULT_CANT_COMP=0;
+    static final int DEFAULT_CANT_COMP=1;
     
     private final SettingsModelIntegerBounded cantComp=new SettingsModelIntegerBounded(ACPNodeNodeModel.CFGKEY_CANT_COMP,ACPNodeNodeModel.DEFAULT_CANT_COMP,0,Integer.MAX_VALUE);
     
@@ -101,6 +101,8 @@ public class ACPNodeNodeModel extends NodeModel {
 	private final SettingsModelDouble minLoadingFactor=new SettingsModelDouble(ACPNodeNodeModel.CFGKEY_MIN_AUTOVAL,ACPNodeNodeModel.DEFAULT_MIN_LOADING_FACTOR);
 	
     HashMap<Integer, Vector<ComponentePrincipalComponent>> componentes;
+    
+    public static double [][] matrizResultado;
 
     /**
      * Constructor for the node model.
@@ -110,6 +112,7 @@ public class ACPNodeNodeModel extends NodeModel {
         // TODO one incoming port and one outgoing port is assumed
         super(1, 1);
         cantComp.setEnabled(false);
+        cantIteraciones.setEnabled(false);
     }
 
     /**
@@ -158,19 +161,14 @@ public class ACPNodeNodeModel extends NodeModel {
         }
       
 
-        componentes=DataManager.getComponentes(dataSet, nombresVariables);
-        //tengo 292 filas y 13 columnas ahora
+        componentes=getComponentes(dataSet, nombresVariables,table.getDataTableSpec().getNumColumns());
+        
         DataColumnSpec[] allColSpecs = new DataColumnSpec[componentes.keySet().size()];
         for(int i=0;i<componentes.keySet().size();i++)
         {
         	allColSpecs[i]=new DataColumnSpecCreator("Column "+i,DoubleCell.TYPE).createSpec();
         }
-//        allColSpecs[0] = 
-//            new DataColumnSpecCreator("Column 0", StringCell.TYPE).createSpec();
-//        allColSpecs[1] = 
-//            new DataColumnSpecCreator("Column 1", DoubleCell.TYPE).createSpec();
-//        allColSpecs[2] = 
-//            new DataColumnSpecCreator("Column 2", IntCell.TYPE).createSpec();
+
         DataTableSpec outputSpec = new DataTableSpec(allColSpecs);
         // the execution context will provide us with storage capacity, in this
         // case a data container to which we will add rows sequentially
@@ -190,16 +188,13 @@ public class ACPNodeNodeModel extends NodeModel {
         
         for (int i = 0; i < rowCount; i++) {
             RowKey key = new RowKey("Row" + i);
-            // the cells of the current row, the types of the cells must match
-            // the column spec (see above)
+          
             DataCell[] cells = new DataCell[componentes.keySet().size()];
             for(int j=0;j<componentes.keySet().size();j++)
             {
             	cells[j]=new DoubleCell(dataSet[numerosColumnas[j]][i]);
             }
-//            cells[0] = new StringCell("String_" + i); 
-//            cells[1] = new DoubleCell(0.5 * i); 
-//            cells[2] = new IntCell(i);
+
             DataRow row = new DefaultRow(key, cells);
             container.addRowToTable(row);
             
@@ -227,12 +222,7 @@ public class ACPNodeNodeModel extends NodeModel {
 			
 		
 		return fila;
-	}
-
-	public HashMap<Integer, Vector<ComponentePrincipalComponent>> getComponentes(){
-    	return componentes;
-    }
-    
+	}    
     
 
     /**
@@ -271,6 +261,11 @@ public class ACPNodeNodeModel extends NodeModel {
         
         isAutoval.saveSettingsTo(settings);
         minAutoval.saveSettingsTo(settings);
+        isCantComp.saveSettingsTo(settings);
+        cantComp.saveSettingsTo(settings);
+        isVarimax.saveSettingsTo(settings);
+        cantIteraciones.saveSettingsTo(settings);
+        minLoadingFactor.saveSettingsTo(settings);
     }
 
     /**
@@ -286,6 +281,11 @@ public class ACPNodeNodeModel extends NodeModel {
         
         isAutoval.loadSettingsFrom(settings);
         minAutoval.loadSettingsFrom(settings);
+        isCantComp.loadSettingsFrom(settings);
+        cantComp.loadSettingsFrom(settings);
+        isVarimax.loadSettingsFrom(settings);
+        cantIteraciones.loadSettingsFrom(settings);
+        minLoadingFactor.loadSettingsFrom(settings);
     }
 
     /**
@@ -302,6 +302,11 @@ public class ACPNodeNodeModel extends NodeModel {
 
         isAutoval.validateSettings(settings);
         minAutoval.validateSettings(settings);
+        isCantComp.validateSettings(settings);
+        cantComp.validateSettings(settings);
+        isVarimax.validateSettings(settings);
+        cantIteraciones.validateSettings(settings);
+        minLoadingFactor.validateSettings(settings);
     }
     
     /**
@@ -337,6 +342,122 @@ public class ACPNodeNodeModel extends NodeModel {
         // (e.g. data used by the views).
 
     }
+    
+    public HashMap<Integer, Vector<ComponentePrincipalComponent>> getComponentes(){
+    	return componentes;
+    }
+    
+    private HashMap<Integer, Vector<ComponentePrincipalComponent>> getComponentes(double [][] dataSet,String[] nombresVariables,int cantCol){
+		HashMap<Integer, Vector<ComponentePrincipalComponent>> componentes=new HashMap<Integer, Vector<ComponentePrincipalComponent>>();
+		
+		
+		PCA pca=new PCA();
+		
+		pca.enterScoresAsRowPerItem(dataSet);		
+		pca.pca();
+	
+		double[][] loadingFactors;		
+        
+		int numeroDeFactores=0;
+        int indice=0;
+       
+         
+         if(isCantComp.getBooleanValue())           
+    		  numeroDeFactores=cantComp.getIntValue();
+         else
+        	 while (indice<pca.orderedEigenValues().length && pca.orderedEigenValues()[indice]>minAutoval.getDoubleValue())
+             {
+          	   numeroDeFactores++;
+          	   indice++;
+             }
+         
+		if(isVarimax.getBooleanValue())
+         {         
+    		 pca.normalVarimaxRotation(numeroDeFactores);    		 
+             loadingFactors=pca.getRotatedLoadingFactorsAsRows();
+         }
+		else
+		 {
+			 loadingFactors=pca.loadingFactorsAsRows();
+		 }       
+        
+        double [][] transpuesta=new double[cantCol][numeroDeFactores];
+        for (int i = 0; i < numeroDeFactores; i++) {
+			for (int j = 0; j < cantCol; j++) {
+				transpuesta[j][i]=loadingFactors[i][j];
+			}
+		}
+        
+        for (int i = 0; i < cantCol; i++) {
+        	System.out.println(nombresVariables[i]);
+        	for(int j=0;j< numeroDeFactores;j++){
+			if(Math.abs(transpuesta[i][j])>0.3)
+			System.out.println(j+""+Math.abs(transpuesta[i][j]));
+			else
+				System.out.println(j+"nada");
+		}
+        }
+        matrizResultado=transpuesta;
+      
+        if(isAutoval.getBooleanValue())
+        {
+        for(int j=0;j<cantCol;j++)
+    	{
+    	int i=0;
+    	int numeroComponente=0;
+    	double aux=0D;
+        while(i< cantCol&& pca.orderedEigenValues()[i]>1)
+        {
+           	if(Math.abs(transpuesta[j][i])>aux)
+           	{
+                numeroComponente=i;           
+                aux=Math.abs(transpuesta[j][i]);
+           	}
+           	i++;
+        }
+       if(componentes.get(numeroComponente)!=null)
+        	componentes.get(numeroComponente).add(new ComponentePrincipalComponent(nombresVariables[j],aux));
+       else
+       {
+    	   Vector<ComponentePrincipalComponent> vector=new Vector<ComponentePrincipalComponent>();
+    	   vector.add(new ComponentePrincipalComponent(nombresVariables[j],aux));
+    	   componentes.put(new Integer(numeroComponente), vector);
+       }
+      
+        }
+      }
+        if(isCantComp.getBooleanValue())
+        {
+        	  for(int j=0;j<cantCol;j++)
+          	{
+          	int i=0;
+          	int numeroComponente=0;
+          	double aux=0D;
+              while(i< cantComp.getIntValue())
+              {
+                 	if(Math.abs(transpuesta[j][i])>aux)
+                 	{
+                      numeroComponente=i;           
+                      aux=Math.abs(transpuesta[j][i]);
+                 	}
+                 	i++;
+              }
+             if(componentes.get(numeroComponente)!=null)
+              	componentes.get(numeroComponente).add(new ComponentePrincipalComponent(nombresVariables[j],aux));
+             else
+             {
+          	   Vector<ComponentePrincipalComponent> vector=new Vector<ComponentePrincipalComponent>();
+          	   vector.add(new ComponentePrincipalComponent(nombresVariables[j],aux));
+          	   componentes.put(new Integer(numeroComponente), vector);
+             }
+            
+              }
+        }
+        
+   	
+	
+		return componentes;
+	}
     
     
 
