@@ -4,7 +4,8 @@ Bundle-Name: ACPNode-Node extension for KNIME Workbench
 Bundle-SymbolicName: org.unicen.knime.acp; singleton:=true
 Bundle-Version: 1.0.0
 Bundle-ClassPath: acpnode.jar,
- lib/flanagan.jar
+ lib/flanagan.jar,
+ lib/jgraph.jar
 Bundle-Activator: org.unicen.edu.ar.knime.acp.node.ACPNodeNodePlugin
 Bundle-Vendor: Rodrigo
 Bundle-Localization: plugin
