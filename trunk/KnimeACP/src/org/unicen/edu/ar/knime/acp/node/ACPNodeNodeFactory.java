@@ -26,7 +26,7 @@ public class ACPNodeNodeFactory
      */
     @Override
     public int getNrNodeViews() {
-        return 1;
+        return 2;
     }
 
     /**
@@ -35,7 +35,10 @@ public class ACPNodeNodeFactory
     @Override
     public NodeView<ACPNodeNodeModel> createNodeView(final int viewIndex,
             final ACPNodeNodeModel nodeModel) {
+    	if(viewIndex==0)
         return new ACPNodeNodeView(nodeModel);
+    	else
+    		return new ACPNodeNodeViewMatrix(nodeModel);
     }
 
     /**

@@ -46,7 +46,7 @@ import sun.java2d.loops.DrawLine;
  */
 public class ACPNodeNodeView extends NodeView<ACPNodeNodeModel> {
 
-	private JPanel m_panel;
+	private JPanel m_panel=new JPanel();
 	
     /**
      * Creates a new view.
@@ -58,14 +58,16 @@ public class ACPNodeNodeView extends NodeView<ACPNodeNodeModel> {
 
         // TODO instantiate the components of the view here.
       HashMap<Integer,Vector<ComponentePrincipalComponent>> componentes=nodeModel.getComponentes();
-     getPanel(componentes);
      
-     this.setViewTitleSuffix("vista ACP");
-      setComponent(m_panel);
      
+    
+      setComponent(getPanel(componentes));
+      
+      this.setViewTitleSuffix("vista ACP");
+      setShowNODATALabel(false);
     }
 
-    private void getPanel(
+    private JScrollPane getPanel(
 			HashMap<Integer, Vector<ComponentePrincipalComponent>> componentes) {
 		
 		GraphModel model = new DefaultGraphModel();
@@ -134,10 +136,13 @@ public class ACPNodeNodeView extends NodeView<ACPNodeNodeModel> {
 
 		// Show in Frame
 		
-		JFrame frame=this.createFrame("sumburule");
-		frame.getContentPane().add(new JScrollPane(graph));		
-		frame.pack();
-		frame.setVisible(true);
+		//JFrame frame=this.createFrame("frameACP");
+		JScrollPane panel= new JScrollPane(graph);
+		panel.setName("ACP View");
+		return panel;
+//		frame.pack();
+//		frame.setVisible(true);
+//return frame;
 		}
 
     public double Redondear(double nD, int nDec)
