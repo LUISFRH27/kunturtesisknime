@@ -98,12 +98,15 @@ public class ACPNodeNodeModel extends NodeModel {
 	static final String CFGKEY_MIN_LOADING_FACTOR="MinLoadingFactor";
 	static final double DEFAULT_MIN_LOADING_FACTOR=0D;
 	
-	private final SettingsModelDouble minLoadingFactor=new SettingsModelDouble(ACPNodeNodeModel.CFGKEY_MIN_AUTOVAL,ACPNodeNodeModel.DEFAULT_MIN_LOADING_FACTOR);
+	private final SettingsModelDouble minLoadingFactor=new SettingsModelDouble(ACPNodeNodeModel.CFGKEY_MIN_LOADING_FACTOR,ACPNodeNodeModel.DEFAULT_MIN_LOADING_FACTOR);
 	
     HashMap<Integer, Vector<ComponentePrincipalComponent>> componentes;
     
-    public static double [][] matrizResultado;
+    private Double [][] matrizResultado;
+    
+    String[] nombresVariables;
 
+    private int numeroDeFactores;
     /**
      * Constructor for the node model.
      */
@@ -113,6 +116,7 @@ public class ACPNodeNodeModel extends NodeModel {
         super(1, 1);
         cantComp.setEnabled(false);
         cantIteraciones.setEnabled(false);
+        
     }
 
     /**
@@ -135,7 +139,7 @@ public class ACPNodeNodeModel extends NodeModel {
         BufferedDataTable table = inData[0];
         int rowCount = table.getRowCount();
         
-        String[] nombresVariables=new String[table.getDataTableSpec().getNumColumns()];
+        nombresVariables=new String[table.getDataTableSpec().getNumColumns()];
         double[][] dataSet=new double[table.getDataTableSpec().getNumColumns()][rowCount];
         
         for (int i = 0; i < table.getDataTableSpec().getNumColumns(); i++) {
@@ -358,7 +362,7 @@ public class ACPNodeNodeModel extends NodeModel {
 	
 		double[][] loadingFactors;		
         
-		int numeroDeFactores=0;
+		numeroDeFactores=0;
         int indice=0;
        
          
@@ -381,23 +385,15 @@ public class ACPNodeNodeModel extends NodeModel {
 			 loadingFactors=pca.loadingFactorsAsRows();
 		 }       
         
-        double [][] transpuesta=new double[cantCol][numeroDeFactores];
+        Double [][] transpuesta=new Double[cantCol][numeroDeFactores];
         for (int i = 0; i < numeroDeFactores; i++) {
 			for (int j = 0; j < cantCol; j++) {
 				transpuesta[j][i]=loadingFactors[i][j];
 			}
 		}
         
-        for (int i = 0; i < cantCol; i++) {
-        	System.out.println(nombresVariables[i]);
-        	for(int j=0;j< numeroDeFactores;j++){
-			if(Math.abs(transpuesta[i][j])>0.3)
-			System.out.println(j+""+Math.abs(transpuesta[i][j]));
-			else
-				System.out.println(j+"nada");
-		}
-        }
-        matrizResultado=transpuesta;
+
+       
       
         if(isAutoval.getBooleanValue())
         {
@@ -454,12 +450,31 @@ public class ACPNodeNodeModel extends NodeModel {
               }
         }
         
-   	
+        for (int i = 0; i < cantCol; i++) {
+        	
+        	for(int j=0;j< numeroDeFactores;j++){
+        		if(Math.abs(transpuesta[i][j])>=minLoadingFactor.getDoubleValue())
+        		transpuesta[i][j]=Redondear(transpuesta[i][j], 2);
+        		else
+        			transpuesta[i][j]=0D;
+//			if(Math.abs(transpuesta[i][j])>0.3)
+//			System.out.println(j+""+Math.abs(transpuesta[i][j]));
+//			else
+//				System.out.println(j+"nada");
+		}
+        }
+        matrizResultado=transpuesta;
 	
 		return componentes;
 	}
+    public double Redondear(double nD, int nDec)
+	{
+	  return Math.round(nD*Math.pow(10,nDec))/Math.pow(10,nDec);
+	}
     
-    
+    public Double[][] getMatrix(){return matrizResultado;}
 
+    public String[] getNombreVariables(){return nombresVariables;}
+    public int getNumeroDeComponentes(){return numeroDeFactores;}
 }
 
