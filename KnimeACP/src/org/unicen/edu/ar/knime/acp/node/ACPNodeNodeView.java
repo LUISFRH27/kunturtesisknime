@@ -35,6 +35,7 @@ import org.jgraph.graph.GraphConstants;
 import org.jgraph.graph.GraphModel;
 import org.knime.core.node.NodeView;
 import org.unicen.edu.ar.knime.acp.kernel.ComponentePrincipalComponent;
+import org.unicen.edu.ar.knime.acp.kernel.XStreamManager;
 
 import sun.java2d.loops.DrawLine;
 
@@ -57,7 +58,7 @@ public class ACPNodeNodeView extends NodeView<ACPNodeNodeModel> {
         super(nodeModel);
 
         // TODO instantiate the components of the view here.
-      HashMap<Integer,Vector<ComponentePrincipalComponent>> componentes=nodeModel.getComponentes();
+      HashMap<Integer,Vector<ComponentePrincipalComponent>> componentes= nodeModel.getComponentes();
      
      
     

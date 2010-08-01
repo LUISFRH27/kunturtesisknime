@@ -14,7 +14,9 @@ import org.knime.core.data.DataColumnSpec;
 import org.knime.core.data.DataColumnSpecCreator;
 import org.knime.core.data.DataRow;
 import org.knime.core.data.DataTableSpec;
+import org.knime.core.data.DataType;
 import org.knime.core.data.RowKey;
+import org.knime.core.data.container.DataContainer;
 import org.knime.core.data.def.DefaultRow;
 import org.knime.core.data.def.DoubleCell;
 import org.knime.core.data.def.IntCell;
@@ -30,10 +32,15 @@ import org.knime.core.node.ExecutionMonitor;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeLogger;
 import org.knime.core.node.NodeModel;
+import org.knime.core.node.NodeSettings;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
 import org.unicen.edu.ar.knime.acp.kernel.ComponentePrincipalComponent;
 import org.unicen.edu.ar.knime.acp.kernel.PCA;
+import org.unicen.edu.ar.knime.acp.kernel.SettingsConfig;
+import org.unicen.edu.ar.knime.acp.kernel.XStreamManager;
+
+
 
 import flanagan.math.Matrix;
 
@@ -107,6 +114,12 @@ public class ACPNodeNodeModel extends NodeModel {
     String[] nombresVariables;
 
     private int numeroDeFactores;
+    
+    static final String CFG_FILENAME = "savedata.xml";
+    
+    
+    static final String CFG_COMPONENTS = "components";
+    
     /**
      * Constructor for the node model.
      */
@@ -173,6 +186,8 @@ public class ACPNodeNodeModel extends NodeModel {
         	allColSpecs[i]=new DataColumnSpecCreator("Column "+i,DoubleCell.TYPE).createSpec();
         }
 
+        
+        
         DataTableSpec outputSpec = new DataTableSpec(allColSpecs);
         // the execution context will provide us with storage capacity, in this
         // case a data container to which we will add rows sequentially
@@ -180,11 +195,9 @@ public class ACPNodeNodeModel extends NodeModel {
         // will buffer to disc if necessary.
         BufferedDataContainer container = exec.createDataContainer(outputSpec);
         
-        
-        
         int[] numerosColumnas=new int[componentes.keySet().size()];
         int pos=0;
-        for (Iterator iterator = componentes.keySet().iterator(); iterator.hasNext();) {
+        for (Iterator<Integer> iterator = componentes.keySet().iterator(); iterator.hasNext();) {
 			Integer type = (Integer) iterator.next();
 			Vector<ComponentePrincipalComponent> factores=componentes.get(type);
 			numerosColumnas[pos++]=getMayor(factores);			
@@ -199,6 +212,9 @@ public class ACPNodeNodeModel extends NodeModel {
             	cells[j]=new DoubleCell(dataSet[numerosColumnas[j]][i]);
             }
 
+           
+            
+            
             DataRow row = new DefaultRow(key, cells);
             container.addRowToTable(row);
             
@@ -208,13 +224,18 @@ public class ACPNodeNodeModel extends NodeModel {
                 "Adding row " + i);
         }
         
+        
+        
         // once we are done, we close the container and return its table
         container.close();
         BufferedDataTable out = container.getTable();
+        
         return new BufferedDataTable[]{out};
     }
     
-    private int getMayor(Vector<ComponentePrincipalComponent> factores) {
+
+
+	private int getMayor(Vector<ComponentePrincipalComponent> factores) {
 		double peso=0;
 		int fila=-1;
 		for(int i=0;i<factores.size();i++)
@@ -327,7 +348,13 @@ public class ACPNodeNodeModel extends NodeModel {
         // and user settings set through loadSettingsFrom - is all taken care 
         // of). Load here only the other internals that need to be restored
         // (e.g. data used by the views).
-
+    	String fileName = internDir + "\\" + CFG_FILENAME;
+       SettingsConfig settingConfig = new XStreamManager().GetonfigSettings(fileName);
+       
+    	componentes = settingConfig.getComponentes();
+        nombresVariables = settingConfig.getVariableNames();
+        matrizResultado = settingConfig.getResultMatrix();
+        numeroDeFactores = settingConfig.getFactorsNumber();
     }
     
     /**
@@ -344,7 +371,15 @@ public class ACPNodeNodeModel extends NodeModel {
         // and user settings saved through saveSettingsTo - is all taken care 
         // of). Save here only the other internals that need to be preserved
         // (e.g. data used by the views).
-
+       // HashMap<Integer, Vector<ComponentePrincipalComponent>> components = this.getComponentes();
+    	String fileName = internDir + "\\" + CFG_FILENAME;
+    	SettingsConfig config = new SettingsConfig();
+    	config.setComponentes(componentes);
+    	config.setResultMatrix(matrizResultado);
+    	config.setVariableNames(nombresVariables);
+    	config.setFactorsNumber(numeroDeFactores);
+    	
+        new XStreamManager().SaveXMLFile(fileName, config);
     }
     
     public HashMap<Integer, Vector<ComponentePrincipalComponent>> getComponentes(){
