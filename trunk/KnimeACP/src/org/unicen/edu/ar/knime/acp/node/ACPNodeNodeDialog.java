@@ -1,14 +1,6 @@
 package org.unicen.edu.ar.knime.acp.node;
 
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.GridBagLayout;
-import java.awt.Rectangle;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.awt.geom.Rectangle2D;
+
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -18,7 +10,6 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
-import org.knime.core.node.defaultnodesettings.DialogComponent;
 import org.knime.core.node.defaultnodesettings.DialogComponentBoolean;
 import org.knime.core.node.defaultnodesettings.DialogComponentNumber;
 import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
@@ -39,24 +30,6 @@ import org.knime.core.node.defaultnodesettings.SettingsModelIntegerBounded;
 public class ACPNodeNodeDialog extends DefaultNodeSettingsPane {
 
 	
-	private JPanel jPanelRotacion;
-	private JLabel jLblRotacion;
-	private JLabel jLblVarimax;
-	private JRadioButton jRButtonVarimax;
-	private JRadioButton jRButtonAutovalor;
-	private JLabel jLblNroIteraciones;
-	private JTextField jTxtNroIteraciones;
-	private JTextField jTxtMinAutoval;
-	private JTextField jTxtCantidadComponentes;
-	private JRadioButton jRButtonCantComp;
-	private JPanel jPanel;
-	private JLabel jLblError;
-	private JPanel jExtraccion;
-	private JLabel jLblExtraccion;
-	private JPanel jPanelOpcionesVisual;
-	private JLabel jLblVisualizaon;
-	private JLabel jLblVAbsMenores;
-	private JTextField jTxtMinLoadingFactors;
 	private final SettingsModelBoolean isAutoval=new SettingsModelBoolean(ACPNodeNodeModel.CFGKEY_IS_AUTOVAL,ACPNodeNodeModel.DEFAULT_IS_AUTOVAL);
 	private final SettingsModelDouble minAutoval=new SettingsModelDouble(ACPNodeNodeModel.CFGKEY_MIN_AUTOVAL,ACPNodeNodeModel.DEFAULT_MIN_AUTOVAL);
 	private final SettingsModelBoolean isCantComp=new SettingsModelBoolean(ACPNodeNodeModel.CFGKEY_Is_CantComp,ACPNodeNodeModel.DEFAULT_IS_CANT_COMP); 
@@ -72,7 +45,7 @@ public class ACPNodeNodeDialog extends DefaultNodeSettingsPane {
     protected ACPNodeNodeDialog() {
         super();               
         
-           
+         
         createNewGroup("Extracción");
         addDialogComponent(new DialogComponentBoolean(isAutoval,"Autovalores mayores a:"));
         addDialogComponent(new DialogComponentNumber(minAutoval,
@@ -90,7 +63,7 @@ public class ACPNodeNodeDialog extends DefaultNodeSettingsPane {
     }
     
    
-    
+   
 
 	
     private void crearListeners(){
