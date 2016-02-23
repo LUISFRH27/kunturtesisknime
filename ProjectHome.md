@@ -1,0 +1,1 @@
+Es una extensión para knime, para realizar analisis de componentes principales
